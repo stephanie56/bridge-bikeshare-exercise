@@ -25,7 +25,7 @@ CREATE TABLE stations
 Hint: your query will look something like 
 
 ``` sql
-INSERT INTO stations (SELECT ... FROM tripe);
+INSERT INTO stations (SELECT ... FROM trips);
 ```
 
 Hint 2: You don't have to do it all in one query
