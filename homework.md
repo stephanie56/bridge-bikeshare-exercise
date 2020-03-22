@@ -1,6 +1,6 @@
 # Homework
 
-## Instructions 
+## Instructions
 
 Clone this repo and make a PR with your answers to the questions below, and tag your reviewer in the PR.
 
@@ -20,19 +20,55 @@ CREATE TABLE stations
 );
 ```
 
-1) Write a query that fills out this table. Try your best to pick the correct station name for each ID. You may have to make some manual choices or editing based on the inconsistencies we've found. Do try to pick the correct name for each station ID based on how popular it is in the trip data.
+1. Write a query that fills out this table. Try your best to pick the correct station name for each ID. You may have to make some manual choices or editing based on the inconsistencies we've found. Do try to pick the correct name for each station ID based on how popular it is in the trip data.
 
-Hint: your query will look something like 
+Hint: your query will look something like
 
-``` sql
+```sql
 INSERT INTO stations (SELECT ... FROM trips);
 ```
 
 Hint 2: You don't have to do it all in one query
 
-2) Should we add any indexes to the stations table, why or why not?
+```sql
+CREATE TABLE station_popularity
+(
+    id INT,
+    name VARCHAR(100),
+    popularity integer
+);
 
-3) Fill in the missing data in the `trips` table based on the work you did above
+INSERT INTO station_popularity
+SELECT Max(from_station_id) as station_id, from_station_name as station_name, count(from_station_name) as popularity
+FROM trips
+GROUP BY station_name;
+
+INSERT INTO station_popularity
+SELECT Max(to_station_id) as station_id, to_station_name as station_name, count(to_station_name) as popularity
+FROM trips
+GROUP BY station_name;
+
+CREATE TABLE partition_stations
+(
+    id INT,
+    name VARCHAR(100),
+    popularity integer,
+    row_number integer
+);
+
+INSERT INTO partition_stations
+SELECT *, ROW_NUMBER() OVER (PARTITION BY id ORDER BY popularity DESC)
+FROM station_popularity;
+
+DELETE FROM partition_stations WHERE row_number > 1;
+
+INSERT INTO stations
+SELECT id, name FROM partition_stations WHERE id IS NOT NULL;
+```
+
+2. Should we add any indexes to the stations table, why or why not?
+
+3. Fill in the missing data in the `trips` table based on the work you did above
 
 ## Part 2: Missing Date Data
 
@@ -42,30 +78,28 @@ Note that the `original_filename` column is broken down into quarters, knowing t
 
 There's an inconsistency in the dates in the string columns. For example trip `4461217` has a `start_time_str` of `11/25/2018 15:47` which implies that it's Month / Day / Year, since there's no 25th month, while trip `928659` has a `start_time_str` of `22/04/2017 0:04` which implies Day / Month / Year, since there's not 22nd month!
 
-We can assume that each `original_filename` has dates in the same format. 
+We can assume that each `original_filename` has dates in the same format.
 
-1) What's the inconsistency in date formats? Which files are which?
+1. What's the inconsistency in date formats? Which files are which?
 
-2) Take a look at Postgres's [date functions](https://www.postgresql.org/docs/12/functions-datetime.html), and fill in the missing date data using proper timestamps. You may have to write several queries to do this.
+2. Take a look at Postgres's [date functions](https://www.postgresql.org/docs/12/functions-datetime.html), and fill in the missing date data using proper timestamps. You may have to write several queries to do this.
 
 Hint: your queries will look something like
 
-``` sql
+```sql
 UPDATE trips
 SET start_time = ..., end_time = ...
 WHERE ...;
 ```
 
-3) Other than the index in class, would we benefit from any other indexes on this table? Why or why not?
+3. Other than the index in class, would we benefit from any other indexes on this table? Why or why not?
 
 ## Part 3: Data-driven insights
 
 Using the table you made in part 1 and the dates you added in part 2, let's answer some questions about the bike share data
 
-1) Build a mini-report that does a breakdown of number of trips by month
-2) Build a mini-report that does a breakdown of number trips by time of day of their start and end times
-3) What are the most popular stations to bike to in the summer?
-4) What are the most popular stations to bike from in the winter?
-5) Come up with a question that's interesting to you about this data that hasn't been asked and answer it.
-
-
+1. Build a mini-report that does a breakdown of number of trips by month
+2. Build a mini-report that does a breakdown of number trips by time of day of their start and end times
+3. What are the most popular stations to bike to in the summer?
+4. What are the most popular stations to bike from in the winter?
+5. Come up with a question that's interesting to you about this data that hasn't been asked and answer it.
