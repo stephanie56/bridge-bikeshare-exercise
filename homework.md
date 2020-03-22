@@ -64,11 +64,24 @@ DELETE FROM partition_stations WHERE row_number > 1;
 
 INSERT INTO stations
 SELECT id, name FROM partition_stations WHERE id IS NOT NULL;
+
+DROP TABLE station_popularity, partition_stations;
 ```
 
 2. Should we add any indexes to the stations table, why or why not?
+   No - the station table is a relatively small data set (with 359 rows and 2 columns for each row), which is unlikely to benefit from an index.
 
 3. Fill in the missing data in the `trips` table based on the work you did above
+
+```sql
+UPDATE trips
+SET from_station_id = stations.id
+FROM stations WHERE trips.from_station_name = stations.name;
+
+UPDATE trips
+SET to_station_id = stations.id
+FROM stations WHERE trips.to_station_name = stations.name;
+```
 
 ## Part 2: Missing Date Data
 
