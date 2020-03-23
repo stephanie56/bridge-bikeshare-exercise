@@ -22,13 +22,7 @@ CREATE TABLE stations
 
 1. Write a query that fills out this table. Try your best to pick the correct station name for each ID. You may have to make some manual choices or editing based on the inconsistencies we've found. Do try to pick the correct name for each station ID based on how popular it is in the trip data.
 
-Hint: your query will look something like
-
-```sql
-INSERT INTO stations (SELECT ... FROM trips);
-```
-
-Hint 2: You don't have to do it all in one query
+### Question 1 Answer:
 
 ```sql
 CREATE TABLE station_popularity
@@ -69,9 +63,14 @@ DROP TABLE station_popularity, partition_stations;
 ```
 
 2. Should we add any indexes to the stations table, why or why not?
-   No - the station table is a relatively small data set (with 359 rows and 2 columns for each row), which is unlikely to benefit from an index.
+
+### Question 2 Answer:
+
+No - the station table is a relatively small data set (with 359 rows and 2 columns for each row), which is unlikely to benefit from an index.
 
 3. Fill in the missing data in the `trips` table based on the work you did above
+
+### Question 3 Answer:
 
 ```sql
 UPDATE trips
@@ -95,17 +94,63 @@ We can assume that each `original_filename` has dates in the same format.
 
 1. What's the inconsistency in date formats? Which files are which?
 
-2. Take a look at Postgres's [date functions](https://www.postgresql.org/docs/12/functions-datetime.html), and fill in the missing date data using proper timestamps. You may have to write several queries to do this.
+### Question 1 Answer:
 
-Hint: your queries will look something like
+I run the sql below to find out the date format inconsistency
+
+```sql
+SELECT
+array_agg(distinct substring(start_time_str, 1,2)),
+array_agg(distinct substring(end_time_str, 1,2)),
+original_filename
+from trips
+GROUP BY original_filename
+```
+
+From this result we can find that:
+
+1. naming inconsistency in original file names
+2. date format inconsistency for both start_time_str and end_time_str. Some of the time string has the format `MM/DD/YYYY`, and some of them have the date format `DD/MM/YYYY`.
+3. based on the original_filename, `start_time_str` and `end_time_str` associated with Bikeshare Ridership(2017 Q1) and Bikeshare Ridership(2017 Q2).csv have inconsistent date format (most of the other date strings follow the date format `MM/DD/YYYY`)
+
+| start_time  |            original_filename             |
+| ----------- | :--------------------------------------: |
+| {1/,10,11 } |     Bikeshare Ridership(2017 Q1).csv     |
+| {1/,10,11 } |     Bikeshare Ridership(2017 Q2).csv     |
+| {7/,8/,9/}  |     Bikeshare Ridership(2017 Q3).csv     |
+| {10,11,12}  |     Bikeshare Ridership(2017 Q4).csv     |
+| {1/,2/,3/}  |   Bike Share Toronto Ridership_Q1 2018   |
+| {4/,5/,6/}  | Bike Share Toronto Ridership_Q2 2018.csv |
+| {7/,8/,9/}  | Bike Share Toronto Ridership_Q3 2018.csv |
+| {10,11,12}  | Bike Share Toronto Ridership_Q4 2018.csv |
+
+As the result of the finding, I fixed the inconsistent date format of time strings
 
 ```sql
 UPDATE trips
-SET start_time = ..., end_time = ...
-WHERE ...;
+SET start_time_str = to_char(
+date_trunc('second',
+to_timestamp(start_time_str, 'DD/MM/YYYY HH24:MI:SS')),
+'MM/DD/YYYY HH24:MI')
+WHERE original_filename like '%2017 Q1%' or original_filename like '%2017 Q2%'
+```
+
+2. Take a look at Postgres's [date functions](https://www.postgresql.org/docs/12/functions-datetime.html), and fill in the missing date data using proper timestamps. You may have to write several queries to do this.
+
+With the fix above, I can fill in the missing date data by executing the following sql
+
+```sql
+UPDATE trips
+SET start_time = start_time_str::timestamp
+WHERE start_time_str NOT LIKE '%NULL%'
+
+UPDATE trips
+SET end_time = end_time_str::timestamp
+WHERE end_time_str NOT LIKE '%NULL%'
 ```
 
 3. Other than the index in class, would we benefit from any other indexes on this table? Why or why not?
+   Answer: Yes, the trips table is a large database, each search sql takes a long time to execute. Adding index for this table makes searching in table faster.
 
 ## Part 3: Data-driven insights
 
