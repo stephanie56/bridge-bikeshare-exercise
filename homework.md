@@ -137,6 +137,8 @@ WHERE original_filename like '%2017 Q1%' or original_filename like '%2017 Q2%'
 
 2. Take a look at Postgres's [date functions](https://www.postgresql.org/docs/12/functions-datetime.html), and fill in the missing date data using proper timestamps. You may have to write several queries to do this.
 
+### Question 2 Answer:
+
 With the fix above, I can fill in the missing date data by executing the following sql
 
 ```sql
@@ -150,13 +152,44 @@ WHERE end_time_str NOT LIKE '%NULL%'
 ```
 
 3. Other than the index in class, would we benefit from any other indexes on this table? Why or why not?
-   Answer: Yes, the trips table is a large database, each search sql takes a long time to execute. Adding index for this table makes searching in table faster.
+
+### Question 3 Answer:
+
+Yes, the trips table is a large database, each search sql takes a long time to execute. Adding index for this table makes searching in table faster.
 
 ## Part 3: Data-driven insights
 
 Using the table you made in part 1 and the dates you added in part 2, let's answer some questions about the bike share data
 
 1. Build a mini-report that does a breakdown of number of trips by month
+
+### Question 1 Answer:
+
+Run the following sql
+
+```sql
+SELECT EXTRACT(MONTH FROM start_time) as month, count(*) as number_of_trips
+FROM trips
+GROUP BY month
+```
+
+We get this report
+
+| month | number_of_trips |
+| ----- | :-------------: |
+| 1     |      85155      |
+| 2     |      91350      |
+| 3     |     134172      |
+| 4     |     173791      |
+| 5     |     317373      |
+| 6     |     400394      |
+| 7     |     500019      |
+| 8     |     504696      |
+| 9     |     481362      |
+| 10    |     361550      |
+| 11    |     222996      |
+| 12    |     142465      |
+
 2. Build a mini-report that does a breakdown of number trips by time of day of their start and end times
 3. What are the most popular stations to bike to in the summer?
 4. What are the most popular stations to bike from in the winter?
