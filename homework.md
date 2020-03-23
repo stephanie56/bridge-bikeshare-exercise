@@ -192,5 +192,45 @@ We get this report
 
 2. Build a mini-report that does a breakdown of number trips by time of day of their start and end times
 3. What are the most popular stations to bike to in the summer?
+
+### Question 2 Answer:
+
+York St / Queens Quay W
+
+```sql
+SELECT from_station_name, count(from_station_name)
+FROM trips
+WHERE EXTRACT(MONTH FROM end_time) BETWEEN 6 AND 8
+GROUP BY from_station_name
+ORDER BY count DESC
+LIMIT 1
+```
+
+Result
+
+| station_name            | count |
+| ----------------------- | :---: |
+| York St / Queens Quay W | 21965 |
+
 4. What are the most popular stations to bike from in the winter?
+
+### Question 3 Answer:
+
+Union Station
+
+```sql
+SELECT from_station_name, count(from_station_name)
+FROM trips
+WHERE EXTRACT(MONTH FROM end_time) = 12 OR EXTRACT(MONTH FROM end_time) = 1 OR EXTRACT(MONTH FROM end_time) = 2
+GROUP BY from_station_name
+ORDER BY count DESC
+LIMIT 1
+```
+
+Result
+
+| station_name  | count |
+| ------------- | :---: |
+| Union Station | 4515  |
+
 5. Come up with a question that's interesting to you about this data that hasn't been asked and answer it.
